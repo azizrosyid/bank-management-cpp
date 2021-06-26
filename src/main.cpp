@@ -18,8 +18,6 @@ struct Account
         cin >> name;
         cout << "Masukkan Username (" << username << ") : ";
         cin >> username;
-        cout << "Masukkan Password (" << password << ") : ";
-        cin >> password;
         cout << "Masukkan Nomor Telepon (" << phoneNumber << ") : ";
         cin >> phoneNumber;
     }
@@ -27,7 +25,7 @@ struct Account
 
 struct FileHandler
 {
-    static void appendToFile(const string FILE_NAME, Account data)
+    static void appendToFile(string FILE_NAME, Account data)
     {
         ofstream outFile;
         outFile.open(FILE_NAME, ios::out | ios::binary | ios::app);
@@ -40,7 +38,7 @@ struct FileHandler
         outFile.close();
     }
 
-    static void readFromFile(const string FILE_NAME, Account (&userAccount)[MAX_ACCOUNT], int &lengthUser)
+    static void readFromFile(string FILE_NAME, Account (&userAccount)[MAX_ACCOUNT], int &lengthUser)
     {
         ifstream inFile;
         inFile.open(FILE_NAME, ios::binary);
@@ -60,7 +58,7 @@ struct FileHandler
         inFile.close();
     }
 
-    static void saveToFile(const string FILE_NAME, Account userAccount[MAX_ACCOUNT], int length)
+    static void saveToFile(string FILE_NAME, Account userAccount[MAX_ACCOUNT], int length)
     {
         for (size_t i = 0; i < length; i++)
         {
@@ -99,6 +97,9 @@ struct SortHandler
         {
             string leftName(leftArray[indexLeftArray].name);
             string rightName(rightArray[indexRightArray].name);
+
+            leftName = tolower(leftName[0]);
+            rightName = tolower(rightName[0]);
 
             if (strcmp(leftName.c_str(), rightName.c_str()) < 0)
             {
@@ -148,11 +149,14 @@ class BankManagement
 private:
     Account userAccount[MAX_ACCOUNT];
     int lengthUser = 0;
+    string FILE_NAME;
 
 public:
-    BankManagement()
+    BankManagement(string fileName)
     {
-        importFromFiles("accounts.dat");
+        FILE_NAME = fileName;
+
+        importFromFiles(FILE_NAME);
     }
 
     void importFromFiles(string FILE_NAME)
@@ -178,7 +182,8 @@ public:
              << "5. List Account" << endl
              << "6. Close an Account" << endl
              << "7. Modify an Account" << endl
-             << "Pilih Menu [1-7] : ";
+             << "8. Exit" << endl
+             << "Pilih Menu [1-8] : ";
         cin >> result;
         return result;
     }
@@ -186,8 +191,6 @@ public:
     void createAccount()
     {
         Account &userCreate = userAccount[lengthUser];
-
-        cout << lengthUser << endl;
 
         cout << "Masukkan Nama : ";
         cin >> userCreate.name;
@@ -209,17 +212,16 @@ public:
         cout << "Masukkan Deposit Awal : ";
         cin >> userCreate.balance;
 
-        FileHandler::appendToFile("accounts.dat", userCreate);
+        FileHandler::appendToFile(FILE_NAME, userCreate);
 
         lengthUser++;
     }
 
     int findIndexByUsername(string username)
     {
-        return -1;
         for (int i = 0; i < lengthUser; i++)
         {
-            if (strcmp(userAccount[i].username, username.c_str()))
+            if (userAccount[i].username == username)
             {
                 return i;
             }
@@ -243,6 +245,7 @@ public:
     void depositAccount(string depositUsername, int amountDeposit)
     {
         int index = findIndexByUsername(depositUsername);
+
         if (index == -1)
         {
             cout << "Username Tidak Ditemukan!" << endl;
@@ -250,7 +253,9 @@ public:
         }
 
         userAccount[index].balance += amountDeposit;
+        FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
         cout << "Deposit Berhasil!" << endl;
+        cout << "Saldo Akhir : " << userAccount[index].balance << endl;
     }
 
     void withdrawAccount(string withdrawUsername, int amountWithdraw)
@@ -262,8 +267,16 @@ public:
             return;
         }
 
-        userAccount[index].balance -= amountWithdraw;
-        cout << "Penarikan Berhasil!" << endl;
+        if (userAccount[index].balance > amountWithdraw)
+        {
+            userAccount[index].balance -= amountWithdraw;
+            FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
+            cout << "Penarikan Berhasil!" << endl;
+            cout << "Saldo Akhir : " << userAccount[index].balance << endl;
+            return;
+        }
+
+        cout << "Saldo tidak mencukupi!" << endl;
     }
 
     void showDetail(Account user)
@@ -341,12 +354,13 @@ public:
 
     void listAllAccountSortByName()
     {
-        Account *sortAccount = (Account *)malloc((lengthUser - 1) * sizeof(Account));
-        memcpy(sortAccount, userAccount, (lengthUser - 1) * sizeof(Account));
+        Account *sortAccount = (Account *)malloc(100 * sizeof(Account));
+        memcpy(sortAccount, userAccount, 100 * sizeof(Account));
 
+        SortHandler::mergeSort(sortAccount, 0, lengthUser - 1);
         for (size_t i = 0; i < lengthUser; i++)
         {
-            Account &user = userAccount[i];
+            Account &user = sortAccount[i];
             showDetail(user);
             cout << endl;
         }
@@ -364,7 +378,8 @@ public:
 
         Account &userModify = userAccount[index];
         userModify.modifyData();
-        FileHandler::saveToFile("accounts.dat", userAccount, lengthUser);
+
+        FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
         cout << "Data Berhasil Diubah!" << endl;
     }
 
@@ -383,29 +398,140 @@ public:
             userAccount[i] = userAccount[i + 1];
         }
         lengthUser--;
-        FileHandler::saveToFile("accounts.dat", userAccount, lengthUser);
+
+        FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
         cout << "Data Berhasil Dihapus!" << endl;
     }
 };
 
 int main()
 {
-    BankManagement bank;
-    bank.createAccount();
-    bank.createAccount();
-    bank.createAccount();
-    // bank.searchUserByPhoneNumber("089294124");
-    // bank.listAllAccount();
-    // bank.deleteAccountByUsername("aziz2");
-    // bank.modifyAccount("aziz4");
-    bank.listAllAccount();
-    cout << endl;
-    cout << endl;
-    cout << endl;
-    cout << endl;
-    // bank.listAllAccountFilterUsername("azi");
-    // bank.listAllAccountFilterPhoneNumber("213");
-    // bank.listAllAccountSortByName();
+
+    BankManagement bankManagement("accounts.dat");
+    int select;
+    string username;
+    string name;
+    string phoneNumber;
+    system("cls");
+
+    cout << "Digital Bank Management" << endl
+         << endl;
+    do
+    {
+        system("cls");
+        cout << "Digital Bank Management" << endl
+             << endl;
+        select = bankManagement.menu();
+        if (select == 1)
+        {
+            system("cls");
+            bankManagement.createAccount();
+            cout << "Akun berhasil dibuat!" << endl;
+
+            cin.ignore(2);
+        }
+        else if (select == 2)
+        {
+            system("cls");
+            int amountDeposit;
+            cout << "Masukkan Username Untuk Deposit : ";
+            cin >> username;
+            cout << "Masukkan Jumlah Deposit : ";
+            cin >> amountDeposit;
+
+            bankManagement.depositAccount(username, amountDeposit);
+            cin.ignore(2);
+        }
+        else if (select == 3)
+        {
+            system("cls");
+            int amountWithdraw;
+            cout << "Masukkan Username Untuk Withdraw : ";
+            cin >> username;
+            cout << "Masukkan Jumlah Deposit : ";
+            cin >> amountWithdraw;
+
+            bankManagement.withdrawAccount(username, amountWithdraw);
+            cin.ignore(2);
+        }
+        else if (select == 4)
+        {
+            system("cls");
+            int selectMenu;
+            cout << "1. Cari menggunakan Username" << endl;
+            cout << "2. Cari menggunakan Nomor HP" << endl;
+            cout << "Pilih Menu [1-2] : ";
+            cin >> selectMenu;
+
+            if (selectMenu == 1)
+            {
+                system("cls");
+                cout << "Masukkan Username : ";
+                cin >> username;
+                bankManagement.searchUserByUsername(username);
+            }
+            else if (selectMenu == 2)
+            {
+                system("cls");
+                cout << "Masukkan Nomor HP : ";
+                cin >> phoneNumber;
+                bankManagement.searchUserByPhoneNumber(phoneNumber);
+            }
+            else
+            {
+                system("cls");
+                cout << "Masukkan Pilihan Benar!" << endl;
+            }
+            cin.ignore(2);
+        }
+        else if (select == 5)
+        {
+            system("cls");
+            int selectMenu;
+            bankManagement.listAllAccount();
+
+            cout << "1. List Akun dengan Filter Username" << endl;
+            cout << "2. List Akun dengan Filter Nomor HP" << endl;
+            cout << "3. List Akun dengan Nama urut" << endl;
+            cout << "Pilih Menu [1-3] : ";
+            cin >> selectMenu;
+
+            if (selectMenu == 1)
+            {
+                cout << "Masukkan Username : ";
+                cin >> username;
+                bankManagement.listAllAccountFilterUsername(username);
+            }
+            else if (selectMenu == 2)
+            {
+                cout << "Masukkan Nomor HP : ";
+                cin >> phoneNumber;
+                bankManagement.listAllAccountFilterPhoneNumber(phoneNumber);
+            }
+            else if (selectMenu == 3)
+            {
+                bankManagement.listAllAccountSortByName();
+            }
+            cin.ignore(2);
+        }
+        else if (select == 6)
+        {
+            system("cls");
+            cout << "Masukkan Username : ";
+            cin >> username;
+            bankManagement.deleteAccountByUsername(username);
+            cin.ignore(2);
+        }
+        else if (select == 7)
+        {
+            system("cls");
+            cout << "Masukkan Username : ";
+            cin >> username;
+            bankManagement.modifyAccount(username);
+            cin.ignore(2);
+        }
+
+    } while (select != 8);
 
     return 0;
 }
