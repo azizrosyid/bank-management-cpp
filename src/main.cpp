@@ -4,6 +4,7 @@
 #define MAX_ACCOUNT 100
 using namespace std;
 
+// struct for store data account
 struct Account
 {
     char name[50];
@@ -23,8 +24,10 @@ struct Account
     }
 };
 
+// struct for store function for file operation
 struct FileHandler
 {
+    // append data account to file
     static void appendToFile(string FILE_NAME, Account data)
     {
         ofstream outFile;
@@ -38,6 +41,7 @@ struct FileHandler
         outFile.close();
     }
 
+    // read file and store to array account
     static void readFromFile(string FILE_NAME, Account (&userAccount)[MAX_ACCOUNT], int &lengthUser)
     {
         ifstream inFile;
@@ -58,6 +62,7 @@ struct FileHandler
         inFile.close();
     }
 
+    // save array account to file
     static void saveToFile(string FILE_NAME, Account userAccount[MAX_ACCOUNT], int length)
     {
         for (size_t i = 0; i < length; i++)
@@ -69,21 +74,24 @@ struct FileHandler
     }
 };
 
+// struct for store function for Sorting operation
 struct SortHandler
 {
+    // merge two array and sort array
     static void merge(Account arrAccount[MAX_ACCOUNT], int first, int middle, int last)
     {
         int lengthArrayLeft = middle - first + 1;
         int lengthArrayRight = last - middle;
 
+        // memory allocation for array left & right
         Account *leftArray = (Account *)malloc(lengthArrayLeft * sizeof(Account));
         Account *rightArray = (Account *)malloc(lengthArrayRight * sizeof(Account));
 
+        // copy array to left and right array
         for (size_t i = 0; i < lengthArrayLeft; i++)
         {
             leftArray[i] = arrAccount[first + i];
         }
-
         for (size_t i = 0; i < lengthArrayRight; i++)
         {
             rightArray[i] = arrAccount[middle + 1 + i];
@@ -147,6 +155,7 @@ struct SortHandler
 class BankManagement
 {
 private:
+    // store data user
     Account userAccount[MAX_ACCOUNT];
     int lengthUser = 0;
     string FILE_NAME;
@@ -158,251 +167,271 @@ public:
 
         importFromFiles(FILE_NAME);
     }
+    void importFromFiles(string FILE_NAME);
+    int menu();
+    void createAccount();
+    void modifyAccount(string username);
+    void deleteAccountByUsername(string username);
+    int findIndexByUsername(string username);
+    int findIndexByPhoneNumber(string phoneNumber);
+    void depositAccount(string depositUsername, int amountDeposit);
+    void withdrawAccount(string withdrawUsername, int amountWithdraw);
+    void showDetail(Account user);
+    void searchUserByUsername(string username);
+    void searchUserByPhoneNumber(string phoneNumber);
+    void listAllAccount();
+    void listAllAccountFilterUsername(string usernameFilter);
+    void listAllAccountFilterPhoneNumber(string phoneNumberFilter);
+    void listAllAccountSortByName();
+};
 
-    void importFromFiles(string FILE_NAME)
+void BankManagement::importFromFiles(string FILE_NAME)
+{
+    try
     {
-        try
-        {
-            FileHandler::readFromFile(FILE_NAME, userAccount, lengthUser);
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << e.what() << '\n';
-            std::cerr << "Belum ada data yang di simpan!" << '\n';
-        }
+        FileHandler::readFromFile(FILE_NAME, userAccount, lengthUser);
     }
-
-    int menu()
+    catch (const std::exception &e)
     {
-        int result;
-        cout << "1. Create an Account" << endl
-             << "2. Deposit Account" << endl
-             << "3. Withdraw Account" << endl
-             << "4. Search Account" << endl
-             << "5. List Account" << endl
-             << "6. Close an Account" << endl
-             << "7. Modify an Account" << endl
-             << "8. Exit" << endl
-             << "Pilih Menu [1-8] : ";
-        cin >> result;
-        return result;
+        std::cerr << e.what() << '\n';
+        std::cerr << "Belum ada data yang di simpan!" << '\n';
     }
+}
 
-    void createAccount()
+int BankManagement::menu()
+{
+    int result;
+    cout << "1. Create an Account" << endl
+         << "2. Deposit Account" << endl
+         << "3. Withdraw Account" << endl
+         << "4. Search Account" << endl
+         << "5. List Account" << endl
+         << "6. Close an Account" << endl
+         << "7. Modify an Account" << endl
+         << "8. Exit" << endl
+         << "Pilih Menu [1-8] : ";
+    cin >> result;
+    return result;
+}
+
+void BankManagement::createAccount()
+{
+    Account &userCreate = userAccount[lengthUser];
+
+    cout << "Masukkan Nama : ";
+    cin >> userCreate.name;
+
+    do
     {
-        Account &userCreate = userAccount[lengthUser];
+        cout << "Masukkan Username : ";
+        cin >> userCreate.username;
+    } while (!(findIndexByUsername(userCreate.username) == -1) && cout << "Username Sudah digunakan!" << endl);
 
-        cout << "Masukkan Nama : ";
-        cin >> userCreate.name;
+    cout << "Masukkan Password : ";
+    cin >> userCreate.password;
 
-        do
-        {
-            cout << "Masukkan Username : ";
-            cin >> userCreate.username;
-        } while (!(findIndexByUsername(userCreate.username) == -1) && cout << "Username Sudah digunakan!" << endl);
-
-        cout << "Masukkan Password : ";
-        cin >> userCreate.password;
-
-        do
-        {
-            cout << "Masukkan Nomor Telepon : ";
-            cin >> userCreate.phoneNumber;
-        } while (!(findIndexByPhoneNumber(userCreate.phoneNumber) == -1) && cout << "Nomor HP Sudah digunakan!" << endl);
-        cout << "Masukkan Deposit Awal : ";
-        cin >> userCreate.balance;
-
-        FileHandler::appendToFile(FILE_NAME, userCreate);
-
-        lengthUser++;
-    }
-
-    int findIndexByUsername(string username)
+    do
     {
-        for (int i = 0; i < lengthUser; i++)
-        {
-            if (userAccount[i].username == username)
-            {
-                return i;
-            }
-        }
-        return -1;
-    }
+        cout << "Masukkan Nomor Telepon : ";
+        cin >> userCreate.phoneNumber;
+    } while (!(findIndexByPhoneNumber(userCreate.phoneNumber) == -1) && cout << "Nomor HP Sudah digunakan!" << endl);
+    cout << "Masukkan Deposit Awal : ";
+    cin >> userCreate.balance;
 
-    int findIndexByPhoneNumber(string phoneNumber)
+    FileHandler::appendToFile(FILE_NAME, userCreate);
+
+    lengthUser++;
+}
+
+void BankManagement::modifyAccount(string username)
+{
+    int index = findIndexByUsername(username);
+
+    if (index == -1)
     {
-        return -1;
-        for (int i = 0; i < lengthUser; i++)
-        {
-            if (userAccount[i].phoneNumber == phoneNumber)
-            {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    void depositAccount(string depositUsername, int amountDeposit)
-    {
-        int index = findIndexByUsername(depositUsername);
-
-        if (index == -1)
-        {
-            cout << "Username Tidak Ditemukan!" << endl;
-            return;
-        }
-
-        userAccount[index].balance += amountDeposit;
-        FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
-        cout << "Deposit Berhasil!" << endl;
-        cout << "Saldo Akhir : " << userAccount[index].balance << endl;
-    }
-
-    void withdrawAccount(string withdrawUsername, int amountWithdraw)
-    {
-        int index = findIndexByUsername(withdrawUsername);
-        if (index == -1)
-        {
-            cout << "Username Tidak Ditemukan!" << endl;
-            return;
-        }
-
-        if (userAccount[index].balance > amountWithdraw)
-        {
-            userAccount[index].balance -= amountWithdraw;
-            FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
-            cout << "Penarikan Berhasil!" << endl;
-            cout << "Saldo Akhir : " << userAccount[index].balance << endl;
-            return;
-        }
-
-        cout << "Saldo tidak mencukupi!" << endl;
-    }
-
-    void showDetail(Account user)
-    {
-        cout << "Nama       : " << user.name << endl;
-        cout << "Username   : " << user.username << endl;
-        cout << "Nomor HP   : " << user.phoneNumber << endl;
-        cout << "Saldo      : " << user.balance << endl;
-    }
-
-    void searchUserByUsername(string username)
-    {
-        int index = findIndexByUsername(username);
-        if (index == -1)
-        {
-            cout << "Username Tidak Ditemukan!" << endl;
-            return;
-        }
-
-        Account &userFind = userAccount[index];
-        showDetail(userFind);
+        cout << "Username Tidak Ditemukan!" << endl;
         return;
     }
 
-    void searchUserByPhoneNumber(string phoneNumber)
-    {
-        int index = findIndexByPhoneNumber(phoneNumber);
-        if (index == -1)
-        {
-            cout << "Nomor HP Tidak Ditemukan!" << endl;
-            return;
-        }
+    Account &userModify = userAccount[index];
+    userModify.modifyData();
 
-        Account &userFind = userAccount[index];
-        showDetail(userFind);
+    FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
+    cout << "Data Berhasil Diubah!" << endl;
+}
+
+void BankManagement::deleteAccountByUsername(string username)
+{
+    int index = findIndexByUsername(username);
+
+    if (index == -1)
+    {
+        cout << "Username Tidak Ditemukan!" << endl;
+        return;
     }
 
-    void listAllAccount()
+    for (size_t i = index; i < lengthUser - 1; i++)
     {
-        for (size_t i = 0; i < lengthUser; i++)
-        {
-            Account &user = userAccount[i];
-            showDetail(user);
-            cout << endl;
-        }
+        userAccount[i] = userAccount[i + 1];
     }
+    lengthUser--;
 
-    void listAllAccountFilterUsername(string usernameFilter)
-    {
-        for (size_t i = 0; i < lengthUser; i++)
-        {
-            Account &user = userAccount[i];
-            string username(user.username);
-            if (username.find(usernameFilter) != string::npos)
-            {
-                showDetail(user);
-                cout << endl;
-            }
-        }
-    }
-
-    void listAllAccountFilterPhoneNumber(string phoneNumberFilter)
-    {
-        for (size_t i = 0; i < lengthUser; i++)
-        {
-            Account &user = userAccount[i];
-            string phoneNumber(user.phoneNumber);
-            if (phoneNumber.find(phoneNumberFilter) != string::npos)
-            {
-                showDetail(user);
-                cout << endl;
-            }
-        }
-    }
-
-    void listAllAccountSortByName()
-    {
-        Account *sortAccount = (Account *)malloc(100 * sizeof(Account));
-        memcpy(sortAccount, userAccount, 100 * sizeof(Account));
-
-        SortHandler::mergeSort(sortAccount, 0, lengthUser - 1);
-        for (size_t i = 0; i < lengthUser; i++)
-        {
-            Account &user = sortAccount[i];
-            showDetail(user);
-            cout << endl;
-        }
-    }
-
-    void modifyAccount(string username)
-    {
-        int index = findIndexByUsername(username);
-
-        if (index == -1)
-        {
-            cout << "Username Tidak Ditemukan!" << endl;
-            return;
-        }
-
-        Account &userModify = userAccount[index];
-        userModify.modifyData();
-
-        FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
-        cout << "Data Berhasil Diubah!" << endl;
-    }
-
-    void deleteAccountByUsername(string username)
-    {
-        int index = findIndexByUsername(username);
-
-        if (index == -1)
-        {
-            cout << "Username Tidak Ditemukan!" << endl;
-            return;
-        }
-
-        for (size_t i = index; i < lengthUser - 1; i++)
-        {
-            userAccount[i] = userAccount[i + 1];
-        }
-        lengthUser--;
-
-        FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
-        cout << "Data Berhasil Dihapus!" << endl;
-    }
+    FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
+    cout << "Data Berhasil Dihapus!" << endl;
 };
+
+int BankManagement::findIndexByUsername(string username)
+{
+    for (int i = 0; i < lengthUser; i++)
+    {
+        if (userAccount[i].username == username)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int BankManagement::findIndexByPhoneNumber(string phoneNumber)
+{
+    return -1;
+    for (int i = 0; i < lengthUser; i++)
+    {
+        if (userAccount[i].phoneNumber == phoneNumber)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void BankManagement::depositAccount(string depositUsername, int amountDeposit)
+{
+    int index = findIndexByUsername(depositUsername);
+
+    if (index == -1)
+    {
+        cout << "Username Tidak Ditemukan!" << endl;
+        return;
+    }
+
+    userAccount[index].balance += amountDeposit;
+    FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
+    cout << "Deposit Berhasil!" << endl;
+    cout << "Saldo Akhir : " << userAccount[index].balance << endl;
+}
+
+void BankManagement::withdrawAccount(string withdrawUsername, int amountWithdraw)
+{
+    int index = findIndexByUsername(withdrawUsername);
+    if (index == -1)
+    {
+        cout << "Username Tidak Ditemukan!" << endl;
+        return;
+    }
+
+    if (userAccount[index].balance > amountWithdraw)
+    {
+        userAccount[index].balance -= amountWithdraw;
+        FileHandler::saveToFile(FILE_NAME, userAccount, lengthUser);
+        cout << "Penarikan Berhasil!" << endl;
+        cout << "Saldo Akhir : " << userAccount[index].balance << endl;
+        return;
+    }
+
+    cout << "Saldo tidak mencukupi!" << endl;
+}
+
+void BankManagement::showDetail(Account user)
+{
+    cout << "Nama       : " << user.name << endl;
+    cout << "Username   : " << user.username << endl;
+    cout << "Nomor HP   : " << user.phoneNumber << endl;
+    cout << "Saldo      : " << user.balance << endl;
+}
+
+void BankManagement::searchUserByUsername(string username)
+{
+    int index = findIndexByUsername(username);
+    if (index == -1)
+    {
+        cout << "Username Tidak Ditemukan!" << endl;
+        return;
+    }
+
+    Account &userFind = userAccount[index];
+    showDetail(userFind);
+    return;
+}
+
+void BankManagement::searchUserByPhoneNumber(string phoneNumber)
+{
+    int index = findIndexByPhoneNumber(phoneNumber);
+    if (index == -1)
+    {
+        cout << "Nomor HP Tidak Ditemukan!" << endl;
+        return;
+    }
+
+    Account &userFind = userAccount[index];
+    showDetail(userFind);
+}
+
+void BankManagement::listAllAccount()
+{
+    for (size_t i = 0; i < lengthUser; i++)
+    {
+        Account &user = userAccount[i];
+        showDetail(user);
+        cout << endl;
+    }
+}
+
+void BankManagement::listAllAccountFilterUsername(string usernameFilter)
+{
+    for (size_t i = 0; i < lengthUser; i++)
+    {
+        Account &user = userAccount[i];
+        string username(user.username);
+        if (username.find(usernameFilter) != string::npos)
+        {
+            showDetail(user);
+            cout << endl;
+        }
+    }
+}
+
+void BankManagement::listAllAccountFilterPhoneNumber(string phoneNumberFilter)
+{
+    for (size_t i = 0; i < lengthUser; i++)
+    {
+        Account &user = userAccount[i];
+        string phoneNumber(user.phoneNumber);
+        if (phoneNumber.find(phoneNumberFilter) != string::npos)
+        {
+            showDetail(user);
+            cout << endl;
+        }
+    }
+}
+
+void BankManagement::listAllAccountSortByName()
+{
+    // memory allocation for array sorting
+    Account *sortAccount = (Account *)malloc(MAX_ACCOUNT * sizeof(Account));
+
+    // copy array to sorting array
+    memcpy(sortAccount, userAccount, MAX_ACCOUNT * sizeof(Account));
+
+    // sorting array
+    SortHandler::mergeSort(sortAccount, 0, lengthUser - 1);
+    for (size_t i = 0; i < lengthUser; i++)
+    {
+        Account &user = sortAccount[i];
+        showDetail(user);
+        cout << endl;
+    }
+}
 
 int main()
 {
@@ -465,21 +494,18 @@ int main()
 
             if (selectMenu == 1)
             {
-                system("cls");
                 cout << "Masukkan Username : ";
                 cin >> username;
                 bankManagement.searchUserByUsername(username);
             }
             else if (selectMenu == 2)
             {
-                system("cls");
                 cout << "Masukkan Nomor HP : ";
                 cin >> phoneNumber;
                 bankManagement.searchUserByPhoneNumber(phoneNumber);
             }
             else
             {
-                system("cls");
                 cout << "Masukkan Pilihan Benar!" << endl;
             }
             cin.ignore(2);
